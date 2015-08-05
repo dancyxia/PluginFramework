@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MyPluginDemo</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="drawer_open">Open Drawer</string>
+    <string name="drawer_close">Close Drawer</string>
+    <string name="action_pluginmanager">Plugin Manager</string>
+    <string-array name="date">
+        <item>sunday</item>
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+    </string-array>
+    <string-array name="plugin_array">
+        <item>plugin 1</item>
+        <item>plugin 2</item>
+    </string-array>
+    <string name="install_plugin">Install Plugin</string>
+    <string name="uninstall_plugin">Uninstall Plugin</string>
+</resources>

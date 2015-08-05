@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionName="1.0"
+    android:versionCode="1"
+    package="com.example.myplugindemo">
+
+    <permission
+        android:label="Equity Database Read-Write"
+        android:name="com.example.myplugindemo.provider.permission.READWRITE_PROVIDER" />
+    <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="18"/>
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:name=".PluginDemoApplication">
+        <activity
+            android:name="com.example.myplugindemo.MainActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+		<activity
+            android:name="com.example.myplugindemo.PluginManagerActivity"
+            android:theme="@style/AppTheme"/>
+        
+        <provider
+            android:name="com.example.myplugindemo.provider.MyPluginRegister"
+            android:label=" Equity Database Content Provider"
+            android:authorities="com.example.myplugindemo.provider"
+            android:permission="com.example.myplugindemo.provider.permission.READWRITE_PROVIDER"
+            android:exported = "true"
+            android:syncable="true" />
+    </application>
+
+</manifest>

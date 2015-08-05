@@ -1,0 +1,2 @@
+include ':myPluginDemo', ':pluginlib'
+include ':myPlugin1'
