@@ -27,7 +27,7 @@ import com.example.myplugindemo.plugin.PluginController;
 
 //import android.support.v4.app.Fragment;
 
-public class MainActivity extends /*ActionBar*/Activity{
+public class MainActivity extends Activity{
     private CharSequence mTitle;
     private CharSequence mDrawerTitle;
     private DrawerLayout mDrawerLayout;
