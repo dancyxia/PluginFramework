@@ -2,25 +2,55 @@ package com.example.myplugindemo.db;
 
 import org.osgi.framework.Bundle;
 
+import android.content.Context;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.View;
 
-import com.example.myplugindemo.PluginDemoApplication;
-import com.example.myplugindemo.lib.ServiceViewFactory;
+import com.example.myplugindemo.lib.ServiceFragmentFactory;
 
 /**
  * Created by dancy on 5/21/14.
  */
 public class Plugin {
     private String name;
-    private int type;
+    private PLUGINTYPE type;
     private String packageName;
     private String location;
     private int status;
     
     private Bundle bundle;
-    private ServiceViewFactory service;
+    private ServiceFragmentFactory service;
     private View view;
+
+	public enum PLUGINTYPE {
+		OSGIPLUGIN("OSGI Plugin", 0),
+		SHAREIDPLUGIN("Share ID Plugin", 1);
+
+		final private String pluginTypeName;
+		final private int pluginTypeID;
+
+		PLUGINTYPE(String name, int id) {
+			pluginTypeName = name;
+			pluginTypeID = id;
+		}
+
+		public String getName() {
+			return pluginTypeName;
+		}
+
+		public int getID() {
+			return pluginTypeID;
+		}
+
+		public static PLUGINTYPE findType(int id) {
+			for (PLUGINTYPE type : values()) {
+				if (type.getID() == id)
+					return type;
+			}
+			return null;
+		}
+	}
 
     /* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
@@ -41,11 +71,11 @@ public class Plugin {
         this.name = name;
     }
 
-    public int getType() {
+    public PLUGINTYPE getType() {
         return type;
     }
 
-    public void setType(int type) {
+    public void setType(PLUGINTYPE type) {
         this.type = type;
     }
 
@@ -90,29 +120,30 @@ public class Plugin {
 	/**
 	 * @return the view
 	 */
-	public View getView() {
-		if (view == null && service != null) {
-			view = service.createView(PluginDemoApplication.getLaunchActivity());
-		}
-		return view;
+	public Fragment getFragment() {
+//		if (view == null && service != null) {
+//			view = service.createView(context);
+//		}
+//		return view;
+		return service.getFragment();
 	}
 
 	/**
 	 * @param view the view to set
 	 */
-	public void setView(View view) {
-		Log.d("Plugin", "SetView is called,view: "+view);
-		this.view = view;
-	}
+//	public void setView(View view) {
+//		Log.d("Plugin", "SetView is called,view: "+view);
+////		this.view = view;
+//	}
 
 	/**
 	 * @return the service
 	 */
-	public ServiceViewFactory getService() {
+	public ServiceFragmentFactory getService() {
 		return service;
 	}
 
-	public void setService(ServiceViewFactory service) {
+	public void setService(ServiceFragmentFactory service) {
 		this.service = service;
 	}
 	

@@ -3,8 +3,8 @@ package com.example.myplugin1;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-import com.example.myplugin1.service.impl.ViewFactoryImpl;
-import com.example.myplugindemo.lib.ServiceViewFactory;
+import com.example.myplugin1.service.impl.FragmentFactoryImpl;
+import com.example.myplugindemo.lib.ServiceFragmentFactory;
 
 public class Plugin1Activator implements BundleActivator {
 
@@ -17,11 +17,11 @@ public class Plugin1Activator implements BundleActivator {
 	@Override
 	public void start(BundleContext context) throws Exception {
 		bundleContext = context;
-		ViewFactoryImpl viewFactory = new ViewFactoryImpl();
+		FragmentFactoryImpl viewFactory = new FragmentFactoryImpl();
 //        bundleContext.registerService(
 //        		ViewFactory.class.getName(),vi , props2);
 
-		context.registerService(ServiceViewFactory.class.getName(), viewFactory, null);
+		context.registerService(ServiceFragmentFactory.class.getName(), viewFactory, null);
 	}
 
 	@Override

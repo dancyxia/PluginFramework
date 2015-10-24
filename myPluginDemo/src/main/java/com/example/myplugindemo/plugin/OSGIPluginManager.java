@@ -11,15 +11,14 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
-import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.example.myplugindemo.db.Plugin;
-import com.example.myplugindemo.lib.ServiceViewFactory;
+import com.example.myplugindemo.db.PluginDataSource;
+import com.example.myplugindemo.lib.ServiceFragmentFactory;
 /**
  * Created by dancy on 5/21/14.
  */
@@ -29,14 +28,12 @@ import com.example.myplugindemo.lib.ServiceViewFactory;
 public class OSGIPluginManager extends PluginManager {
     private Felix felix;
     private FelixProperties felixProperties;
-	private ServiceTracker<ServiceViewFactory, ServiceViewFactory> serviceTracker;
+	private ServiceTracker<ServiceFragmentFactory, ServiceFragmentFactory> serviceTracker;
 	private Activity context;
 	private ContentObserver observer = null;
-	
-    
+
     public OSGIPluginManager(PluginController controller) {
     	super(controller);
-    	context = controller.getContext();
         felixProperties = new FelixProperties(context.getFilesDir().getAbsolutePath());
         felix = new Felix(felixProperties);
         try {
@@ -65,32 +62,35 @@ public class OSGIPluginManager extends PluginManager {
     @Override
     public boolean installPlugin(Plugin plugin) {
     	Log.d("OSGI pluginManager", "install plugin");
-    		Log.d("OSGI pluginManager","plugin location: "+plugin.getLocation());
-    	String location = plugin.getLocation();
+		Log.d("OSGI pluginManager","plugin location: "+plugin.getLocation());
+//    	String location = plugin.getLocation();
     	//TODO: save OSGI package name to database
-    	if (!appInstalled("com.example.myplugin1")) {
-    		Log.d("OSGIPluginManager", "install APK plugin");
-			Toast.makeText(context, "Plugin com.example.myplugin1 is not installed. Need to install the app first", Toast.LENGTH_LONG).show();
-        	Intent promptInstall = new Intent(Intent.ACTION_VIEW)
-    	    .setDataAndType(Uri.parse(location), 
-    	                    "application/vnd.android.package-archive");
-        	context.startActivity(promptInstall); 
-        	return false;
-    	} else {
+//    	if (!appInstalled("com.example.myplugin1")) {
+//    		Log.d("OSGIPluginManager", "install APK plugin");
+//			Toast.makeText(context, "Plugin com.example.myplugin1 is not installed. Need to install the app first", Toast.LENGTH_LONG).show();
+//        	Intent promptInstall = new Intent(Intent.ACTION_VIEW)
+//    	    .setDataAndType(Uri.parse(location),
+//    	                    "application/vnd.android.package-archive");
+//        	context.startActivity(promptInstall);
+//        	return false;
+//    	} else {
 	    	try {
 				Bundle bundle = felix.getBundleContext().installBundle(plugin.getLocation());
 				if (bundle != null) {
 					plugin.setBundle(bundle);
 					plugin.setStatus(1);
 					bundle.start();
-					controller.getDataSource().updatePlugin(plugin);
+					PluginDataSource ds = controller.getActiveDataSource();
+					if (ds != null) {
+						ds.updatePlugin(plugin);
+					}
 				}
 			} catch (BundleException e) {
 				// TODO Auto-generated catch block
 				Toast.makeText(context, "Failed to install bundle from "+plugin.getLocation(), Toast.LENGTH_SHORT).show();
 				e.printStackTrace();
 			}
-    	}
+//    	}
     	return true;
 
     }
@@ -108,7 +108,9 @@ public class OSGIPluginManager extends PluginManager {
 				plugin.setStatus(0);
 				plugin.setBundle(null);
 				bundle.uninstall();
-				controller.getDataSource().updatePlugin(plugin);
+				PluginDataSource ds = controller.getActiveDataSource();
+				if (ds != null)
+					ds.updatePlugin(plugin);
 			} catch (BundleException e) {
 				Toast.makeText(context, "Failed to uninstall bundle "+bundle.getSymbolicName(), Toast.LENGTH_SHORT).show();;
 				e.printStackTrace();
@@ -120,7 +122,7 @@ public class OSGIPluginManager extends PluginManager {
     }
 
     @Override
-    public ServiceViewFactory getViewFactory() {
+    public ServiceFragmentFactory getViewFactory() {
         return serviceTracker.getService();
     }
 
@@ -134,12 +136,12 @@ public class OSGIPluginManager extends PluginManager {
 		}
 	}
 	
-	private class OSGIPluginMonitor implements ServiceTrackerCustomizer<ServiceViewFactory, ServiceViewFactory> {
+	private class OSGIPluginMonitor implements ServiceTrackerCustomizer<ServiceFragmentFactory, ServiceFragmentFactory> {
 
 		public OSGIPluginMonitor(PluginManager manager) {
 			BundleContext bundleContext = felix.getBundleContext();
 			try {
-				serviceTracker = new ServiceTracker<ServiceViewFactory, ServiceViewFactory>(bundleContext, bundleContext.createFilter(String.format("(%s=%s)", Constants.OBJECTCLASS, ServiceViewFactory.class.getName())), this);
+				serviceTracker = new ServiceTracker<ServiceFragmentFactory, ServiceFragmentFactory>(bundleContext, bundleContext.createFilter(String.format("(%s=%s)", Constants.OBJECTCLASS, ServiceFragmentFactory.class.getName())), this);
 				Log.d("OSGIPluginManager", "service tracker is open");
 				serviceTracker.open();
 			} catch (InvalidSyntaxException e) {
@@ -162,9 +164,9 @@ public class OSGIPluginManager extends PluginManager {
 //		}
 
 		@Override
-		public ServiceViewFactory addingService(ServiceReference<ServiceViewFactory> ref) {
+		public ServiceFragmentFactory addingService(ServiceReference<ServiceFragmentFactory> ref) {
 			Log.d("OSGIPluginManager", "new service is added");
-			final ServiceViewFactory viewFactory = felix.getBundleContext().getService(ref);
+			final ServiceFragmentFactory viewFactory = felix.getBundleContext().getService(ref);
 			Plugin plugin = controller.getPlugin(viewFactory);
 			if (plugin != null) {
 				plugin.setService(viewFactory);
@@ -180,13 +182,13 @@ public class OSGIPluginManager extends PluginManager {
 		}
 
 		@Override
-		public void modifiedService(ServiceReference<ServiceViewFactory> arg0, ServiceViewFactory arg1) {
+		public void modifiedService(ServiceReference<ServiceFragmentFactory> arg0, ServiceFragmentFactory arg1) {
 			// TODO Auto-generated method stub
 			
 		}
 
 		@Override
-		public void removedService(ServiceReference<ServiceViewFactory> service, ServiceViewFactory serviceImpl) {
+		public void removedService(ServiceReference<ServiceFragmentFactory> service, ServiceFragmentFactory serviceImpl) {
 			Log.d("OSGIPluginManager", "service is removed");
 			Plugin plugin = controller.getPlugin(serviceImpl);
 			if (plugin != null) {

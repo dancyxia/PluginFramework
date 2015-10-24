@@ -5,7 +5,7 @@ import android.database.ContentObserver;
 
 import com.example.myplugindemo.db.Plugin;
 import com.example.myplugindemo.lib.PluginColumns;
-import com.example.myplugindemo.lib.ServiceViewFactory;
+import com.example.myplugindemo.lib.ServiceFragmentFactory;
 
 /**
  * Created by dancy on 5/21/14.
@@ -15,7 +15,7 @@ public class RemoteAccessPluginManager extends PluginManager {
 	Activity context;
 	public RemoteAccessPluginManager(PluginController controller) {
 		super(controller);
-		context = controller.getContext();
+//		context = controller.getContext();
 	}
 
 	@Override
@@ -32,7 +32,7 @@ public class RemoteAccessPluginManager extends PluginManager {
 	}
 
 	@Override
-	public ServiceViewFactory getViewFactory() {
+	public ServiceFragmentFactory getViewFactory() {
 		// TODO Auto-generated method stub
 		return null;
 	}

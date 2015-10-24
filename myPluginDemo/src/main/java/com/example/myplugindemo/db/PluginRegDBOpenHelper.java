@@ -4,8 +4,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.util.Log;
 
+import com.example.myplugindemo.PluginDemoApplication;
 import com.example.myplugindemo.lib.PluginColumns;
 
 /**
@@ -13,17 +15,18 @@ import com.example.myplugindemo.lib.PluginColumns;
  */
 public class PluginRegDBOpenHelper extends SQLiteOpenHelper{
     private static final String DATABASE_NAME="plugins.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
     private final static String PLUGIN = "plugin";
 
-    public PluginRegDBOpenHelper(Context context) {
+        public PluginRegDBOpenHelper(Context context) {
         super(context,DATABASE_NAME,null,DATABASE_VERSION);
+        Log.d("DBOpenHelper", "go to create DB: " + DATABASE_NAME);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Log.d("DBOpenHelper", "go to create DB");
-        initDB(db, 2);
+        Log.d("DBOpenHelper", "go to init DB");
+        initDB(db, DATABASE_VERSION);
     }
 
     private void initDB(SQLiteDatabase db, int version) {
@@ -43,14 +46,16 @@ public class PluginRegDBOpenHelper extends SQLiteOpenHelper{
 
                 values = new ContentValues();
                 values.put(PluginColumns.PLUGIN_PACKAGE, "com.example.myplugin1.service.impl");
-                values.put(PluginColumns.PLUGIN_LOCATION, "file:///sdcard/bundles/MyPlugin1.apk");
+                String loc = "file://"+Environment.getExternalStorageDirectory().getAbsolutePath()+"/bundles/MyPlugin1.apk";
+                values.put(PluginColumns.PLUGIN_LOCATION, loc/*"file:///sdcard/bundles/MyPlugin1.apk"*/);
                 values.put(PluginColumns.SERVICE_NAME, "plugin1");
                 values.put(PluginColumns.PLUGIN_STATUS, 0);
-                db.insert(PLUGIN, "",values);
+                db.insert(PLUGIN, "", values);
 
                 values.clear();
                 values.put(PluginColumns.PLUGIN_PACKAGE, "com.example.plugin.calendarevent");
-                values.put(PluginColumns.PLUGIN_LOCATION, "file:///sdcard/bundles/MyNADiaryService.jar");
+                loc ="file://"+ Environment.getExternalStorageDirectory().getAbsolutePath()+"/bundles/MyNADiaryService.jar";
+                values.put(PluginColumns.PLUGIN_LOCATION, loc/*"file:///sdcard/bundles/MyNADiaryService.jar"*/);
                 values.put(PluginColumns.SERVICE_NAME, "Calendar Event");
                 values.put(PluginColumns.PLUGIN_STATUS, 0);
                 db.insert(PLUGIN, "",values);

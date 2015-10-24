@@ -3,7 +3,7 @@ package com.example.myplugindemo.plugin;
 import android.database.ContentObserver;
 
 import com.example.myplugindemo.db.Plugin;
-import com.example.myplugindemo.lib.ServiceViewFactory;
+import com.example.myplugindemo.lib.ServiceFragmentFactory;
 
 /**
  * Created by dancy on 5/21/14.
@@ -28,7 +28,7 @@ public class ShareIDPluginManager extends PluginManager {
 	}
 
 	@Override
-	public ServiceViewFactory getViewFactory() {
+	public ServiceFragmentFactory getViewFactory() {
 		// TODO Auto-generated method stub
 		return null;
 	}

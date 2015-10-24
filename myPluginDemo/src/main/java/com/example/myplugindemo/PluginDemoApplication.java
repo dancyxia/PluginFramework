@@ -6,7 +6,14 @@ import android.app.Application;
 public class PluginDemoApplication extends Application {
 //	private PluginController pluginController;
 	public static Activity launchActivity;
+//	private static PluginDemoApplication application;
 //	private PluginDataSource pluginDataSource;
+
+//	public static PluginDemoApplication getInstance() {
+//		if (application == null)
+//			application = new PluginDemoApplication();
+//		return application;
+//	}
 
 	public PluginDemoApplication() {
 		// TODO Auto-generated constructor stub
@@ -28,10 +35,13 @@ public class PluginDemoApplication extends Application {
 //		
 //	}
 	
-	public void setLaunchActivity(MainActivity mainActivity) {
+	public void attachLaunchActivity(MainActivity mainActivity) {
 		launchActivity = mainActivity;
 	}
 
+	public void detachActivity() {
+		launchActivity = null;
+	}
 
 	/**
 	 * @return the launchActivity

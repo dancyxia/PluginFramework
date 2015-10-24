@@ -1,17 +1,19 @@
-package com.example.myplugin1;
+package com.example.myplugin1
+		;
 
 import android.app.Activity;
 import android.os.Bundle;
 
-import com.example.myplugin1.service.impl.ViewFactoryImpl;
+import com.example.myplugin1.service.impl.FragmentFactoryImpl;
 
 public class MainActivity extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		ViewFactoryImpl service = new ViewFactoryImpl();
+		FragmentFactoryImpl service = new FragmentFactoryImpl();
 		service.setToday("today");
-		setContentView(service.createView(this));
+		setContentView(R.layout.fragment_main);
+		//setContentView(service.createView(this));
 	}
 }

@@ -1,78 +1,113 @@
 package com.example.myplugindemo;
 
-import java.util.List;
-
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.ListFragment;
-import android.content.Intent;
-import android.database.ContentObserver;
-import android.os.Bundle;
-import android.os.Handler;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.RecyclerView;
+//import android.support.v7.app.ActionBar;
 import android.support.v4.widget.DrawerLayout;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.app.Fragment;
+import android.content.Intent;
+import android.database.ContentObserver;
+import android.os.Bundle;
+import android.os.Handler;
 
 import com.example.myplugindemo.db.Plugin;
+import com.example.myplugindemo.db.PluginDataSource;
 import com.example.myplugindemo.plugin.PluginController;
 
 //import android.support.v4.app.Fragment;
+public class MainActivity extends AppCompatActivity implements DateListFragment.ListItemClickListener {
+    private PluginDataSource mPluginDataSource;
 
-public class MainActivity extends Activity{
     private CharSequence mTitle;
     private CharSequence mDrawerTitle;
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
-
-    private ListView mPluginListView;
-    private List<Plugin> mPluginList;
-    private ArrayAdapter<Plugin> mPluginListAdapter;
-//    private PluginDataSource mPluginDataSource;
+    private DateListFragment dateListFragment;
+//    private ListView mPluginListView;
+//    private List<Plugin> mPluginList;
+//    private ArrayAdapter<Plugin> mPluginListAdapter;
     PluginListObserver mPluginListObserver;
 
-    private Plugin currentPlugin;
-    private int currentDate;
+//    private Plugin currentPlugin;
+//    private int currentDate;
     
     private PluginController pluginController;
-    View currentContentView = null;
+//    View currentContentView = null;
+
 
     @Override
     protected void onPause() {
         super.onPause();
-        pluginController.getDataSource().close();
+        mPluginDataSource.close();
+        pluginController.detachDataSource();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPluginDataSource.open();
+        pluginController.attachDatasource(mPluginDataSource);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
-        PluginDemoApplication app = (PluginDemoApplication)getApplicationContext();
-        //this setting must be done before constructing PluginController  
-        app.setLaunchActivity(this);
+
+        mPluginDataSource = new PluginDataSource(this);
+        mPluginDataSource.open();
         pluginController = PluginController.getInstance();
-        //should never be null
-        assert pluginController != null;
+
         initView(savedInstanceState);
     }
 
     private void initView(Bundle savedInstanceState) {
 
-        //init drawer UI
+//        ActionBar  actionBar = getSupportActionBar();
+//        actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
+            //init drawer UI and action bar
+            setupDrawer();
+            RecyclerView mPluginManagerList = (RecyclerView) this.findViewById(R.id.left_drawer);
+            PluginManagerListViewAdapter mPluginListAdapter = new PluginManagerListViewAdapter(pluginController.getPluginManagers());
+            mPluginManagerList.setAdapter(mPluginListAdapter);
+
+            //setup view pager
+            setupTopFragment();
+
+            //setup content viewpager
+            setupPluginFragements();
+
+//        mPluginListObserver = new PluginListObserver(new Handler());
+//        pluginController.registerPluginListObserver(mPluginListObserver);
+
+//        getActionBar().setDisplayHomeAsUpEnabled(true);
+//        getActionBar().setHomeButtonEnabled(true);
+//        if (savedInstanceState == null) {
+//            currentPlugin = mPluginList.isEmpty()? null : mPluginList.get(0);
+//            currentDate = 0;
+//            getFragmentManager().beginTransaction().add(R.id.toplist, DateListFragment.getInstance(currentDate, 0)).commit();
+//            invalidateItem();
+//        }
+    }
+
+    private void setupDrawer() {
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        this.setSupportActionBar(toolbar);
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         mTitle = mDrawerTitle = getTitle();
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
-                R.drawable.ic_launcher, R.string.drawer_open, R.string.drawer_close) {
+                toolbar, R.string.drawer_open, R.string.drawer_close) {
 
             /** Called when a drawer has settled in a completely closed state. */
             public void onDrawerClosed(View view) {
@@ -90,58 +125,54 @@ public class MainActivity extends Activity{
         };
         // Set the drawer toggle as the DrawerListener
         mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerToggle.syncState();
+    }
 
-        //init installed plugin list UI
-        mPluginListView = (ListView) this.findViewById(R.id.left_drawer);
-        mPluginList = pluginController.getInstalledPluginList(); 
-        //    new ArrayList<String>(Arrays.asList(getResources().getStringArray(R.array.plugin_array)
-        mPluginListAdapter = new ArrayAdapter<Plugin>(this, R.layout.plugin_item, mPluginList);        
-        mPluginListView.setAdapter(mPluginListAdapter);
-        mPluginListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                currentPlugin = mPluginList.get(position);
-//                currentContentView = currentPlugin.getView();
-//                Log.d("MainActivity", "currentContentView: "+currentContentView);
-                invalidateItem();
-//                Intent intent = new Intent();
-//                intent.setComponent(new ComponentName(currentPlugin, currentPlugin+".TransparentActivity"));
-//                startActivity(intent);
-                mDrawerLayout.closeDrawer(mPluginListView);
-            }
-        });
+    private void setupTopFragment() {
+       dateListFragment =  DateListFragment.getInstance(0);
+        getSupportFragmentManager().beginTransaction().add(R.id.toplist, dateListFragment).commit();
+    }
 
-        mPluginListObserver = new PluginListObserver(new Handler());
-        pluginController.registerPluginListObserver(mPluginListObserver);
-
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-//        getActionBar().setHomeButtonEnabled(true);
-        if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction().add(R.id.toplist, new DateListFragment()).commit();
-            currentPlugin = mPluginList.isEmpty()? null : mPluginList.get(0);
-            currentDate = 0;
-            invalidateItem();
+    @Override
+    public void onItemClicked(int position) {
+        Plugin plugin = pluginViewPagerAdapter.getPlugin(position);
+        if (plugin.getService() != null) {
+            Log.d("Two-Frag_test", "setToday and reset view...");
+            plugin.getService().setToday(getResources().getStringArray(R.array.date)[position]);
+            pluginViewPagerAdapter.getRegisteredFragment(position).setToday(getResources().getStringArray(R.array.date)[position]);
         }
     }
 
-    public void setCurrentDate(int currentDate) {
-        this.currentDate = currentDate;
-    }
+    PluginPageManager pluginPageManager;
+    PluginViewPagerAdapter pluginViewPagerAdapter;
 
-    public void invalidateItem() {
-    	ContentFragment fragment = new ContentFragment();
-    	if (currentPlugin != null) {
-    		currentContentView = currentPlugin.getView();
-    	}
-        fragment.setCurrentView(currentContentView);
-        Bundle args = new Bundle();
-        args.putString(ContentFragment.ARG_PLUGIN_NAME, currentPlugin == null?"":currentPlugin.getName());
-        args.putInt(ContentFragment.ARG_DATE_NO, currentDate);
-        fragment.setArguments(args);
-        this.getFragmentManager().beginTransaction()
-                .replace(R.id.fragment_content, fragment)
-                .commit();
+    public void setupPluginFragements() {
+        ViewPager vp = (ViewPager)findViewById(R.id.plugin_pager);
+        pluginViewPagerAdapter = new PluginViewPagerAdapter(getSupportFragmentManager(),dateListFragment.getSelectedItemPosition());
+        pluginViewPagerAdapter.addPlugins(pluginController.getInstalledPluginList(mPluginDataSource));
+        vp.setAdapter(pluginViewPagerAdapter);
+        pluginPageManager = new PluginPageManager();
+        vp.addOnPageChangeListener(pluginPageManager);
+
+        TabLayout tab = (TabLayout)findViewById(R.id.tabs);
+        tab.setupWithViewPager(vp);
     }
+//    public void invalidateItem() {
+//    	PluginFragment fragment = (PluginFragment)this.getFragmentManager().findFragmentByTag("contentfrag");
+//        if (currentPlugin != null) {
+//            currentContentView = currentPlugin.getView();
+//        }
+//        if (fragment == null) {
+//            fragment = PluginFragment.getInstance(currentDate, currentPlugin == null ? "" : currentPlugin.getName());
+//            fragment.setCurrentView(currentContentView);
+//            this.getFragmentManager().beginTransaction()
+//                    .add(R.id.fragment_content, fragment, "contentfrag")
+//                    .commit();
+//        } else {
+//            Log.d("mainActivity", "currentPlaugin: "+currentPlugin+",currentView: "+currentContentView);
+//            fragment.setCurrentView(currentContentView);
+//        }
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -179,90 +210,31 @@ public class MainActivity extends Activity{
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
             Log.d("MainActivity", "plugin dataChange is received");
-            mPluginList.clear();
-            mPluginList.addAll(pluginController.getInstalledPluginList());
-            mPluginListAdapter.notifyDataSetChanged();
+//            mPluginList.clear();
+//            mPluginList.addAll(pluginController.getInstalledPluginList());
+//            mPluginListAdapter.notifyDataSetChanged();
         }
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class ContentFragment extends Fragment {
-
-        public static final String ARG_DATE_NO = "DATE_NO";
+    public static class DefaultContentFragment extends Fragment {
+        /**
+         * A placeholder fragment containing a simple view.
+         */
         public static final String ARG_PLUGIN_NAME = "PLUGIN_NAME";
-        private View currentView;
 
-        public ContentFragment() {
-        }
+        public DefaultContentFragment() {  }
 
-        public void setCurrentView(View currentContentView) {
-        	currentView = currentContentView;
-		}
-
-		@Override
+            @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
+                                     Bundle savedInstanceState) {
 
-            int date_idx = this.getArguments().getInt(ARG_DATE_NO);
-            Log.d("Two-Frag_test", "get position: "+date_idx);
-
-            View rootView = currentView;
-            
-            if (rootView == null) {
-	            String pluginPackage = this.getArguments().getString(ARG_PLUGIN_NAME);
-	            rootView = inflater.inflate(R.layout.fragment_main, container, false);
-	            TextView textView = (TextView) rootView.findViewById(R.id.fragment_text);
-	            textView.setText(new StringBuffer("current selection is ").append(pluginPackage/*getResources().getStringArray(R.array.plugin_array)[plugin_idx]*/).append(" today is ").append(getResources().getStringArray(R.array.date)[date_idx]));
-            } 
-            return rootView;
-        }
-    }
-
-    public static class DateListFragment extends ListFragment {
-
-        public static final String ARG_DATE_NO = "DATE_NO";
-        public static final String ARG_PLUGIN_NO = "PLUGIN_NO";
-
-        public DateListFragment() {
-
-        }
-
-        @Override
-        public void onListItemClick(ListView l, View v, int position, long id) {
-            super.onListItemClick(l, v, position, id);
-            MainActivity owner = ((MainActivity) getActivity());
-            Log.d("Two-Frag_test", "click position  1: "+position);
-            owner.setCurrentDate(position);
-            if (owner.currentPlugin.getService() != null) {
-            	Log.d("Two-Frag_test", "setToday and reset view...");
-                owner.currentPlugin.getService().setToday(getResources().getStringArray(R.array.date)[position]);
-                owner.currentPlugin.setView(null);
+            if (container == null) {
+                return null;
             }
-            owner.invalidateItem();
-        }
 
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            ListView topList;
-
-            View rootView = inflater.inflate(R.layout.fragment_date_list, container, false);
-
-            topList = (ListView) rootView.findViewById(android.R.id.list);
-            topList.setAdapter(new ArrayAdapter<String>(this.getActivity(), R.layout.date_item, getResources().getStringArray(R.array.date)));
-            topList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    MainActivity owner = ((MainActivity) getActivity());
-                    Log.d("Two-Frag_test", "click position: " + position);
-                    owner.setCurrentDate(position);
-                    owner.invalidateItem();
-                }
-            });
-
-            return rootView;
+            View view = inflater.inflate(R.layout.fragment_main, container, false);
+            return view;
         }
     }
+
 }

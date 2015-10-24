@@ -7,7 +7,9 @@
     <permission
         android:label="Equity Database Read-Write"
         android:name="com.example.myplugindemo.provider.permission.READWRITE_PROVIDER" />
-    <uses-sdk android:minSdkVersion="11" android:targetSdkVersion="18"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="19"/>
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -26,7 +28,15 @@
 		<activity
             android:name="com.example.myplugindemo.PluginManagerActivity"
             android:theme="@style/AppTheme"/>
-        
+
+        <receiver android:name="com.example.myplugindemo.plugin.PackageInstallReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_CHANGED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
         <provider
             android:name="com.example.myplugindemo.provider.MyPluginRegister"
             android:label=" Equity Database Content Provider"

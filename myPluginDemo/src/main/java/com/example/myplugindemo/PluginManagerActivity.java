@@ -58,7 +58,7 @@ public class PluginManagerActivity extends ListActivity {
         mPluginDataSource = new PluginDataSource(this);
 		
         //TODO: consider cache mechanism
-		List<Plugin> plugins = mPluginDataSource.loadPlugins();
+		List<Plugin> plugins = mPluginDataSource.getPluginList();
 		PluginListAdapter adapter = new PluginListAdapter(this, plugins);
 		setListAdapter(adapter);
 	}
@@ -99,7 +99,7 @@ public class PluginManagerActivity extends ListActivity {
 
 				@Override
 				public void onClick(View arg0) {
-					PluginManager manager = PluginController.getInstance().getPluginManager(plugin.getType());
+					PluginManager manager = PluginController.getInstance().getPluginManager(plugin.getType().getID());
 					if (manager.installPlugin(plugin)) {
 						installButton.setEnabled(false);
 						uninstallButton.setEnabled(true);
@@ -113,7 +113,7 @@ public class PluginManagerActivity extends ListActivity {
 
 				@Override
 				public void onClick(View arg0) {
-					PluginManager manager = PluginController.getInstance().getPluginManager(plugin.getType());
+					PluginManager manager = PluginController.getInstance().getPluginManager(plugin.getType().getID());
 					manager.uninstallPlugin(plugin);
 					installButton.setEnabled(true);
 					uninstallButton.setEnabled(false);

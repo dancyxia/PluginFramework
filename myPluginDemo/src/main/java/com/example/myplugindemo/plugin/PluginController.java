@@ -1,16 +1,15 @@
 package com.example.myplugindemo.plugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import android.app.Activity;
 import android.database.ContentObserver;
 import android.util.Log;
 
-import com.example.myplugindemo.PluginDemoApplication;
 import com.example.myplugindemo.db.Plugin;
 import com.example.myplugindemo.db.PluginDataSource;
-import com.example.myplugindemo.lib.ServiceViewFactory;
+import com.example.myplugindemo.lib.ServiceFragmentFactory;
 
 /**
  * Created by dancy on 5/21/14.
@@ -18,16 +17,12 @@ import com.example.myplugindemo.lib.ServiceViewFactory;
 public class PluginController {
 	
 	private static PluginController instance;
-
-    private PluginDataSource mPluginDataSource;
-    private Activity context;
-    private PluginManager[] pluginManagers = new PluginManager[PluginManagerFactory.TYPE_MAX];
-//    List<Plugin> pluginList;
+    private PluginManager[] pluginManagers = new PluginManager[Plugin.PLUGINTYPE.values().length];
+	private PluginDataSource activeDataSource;
 
     private PluginController() {
-        this.context = PluginDemoApplication.getLaunchActivity();
-        initDatabase();
-        loadPlugins();
+		for (int i = 0; i < pluginManagers.length; i++)
+			pluginManagers[i] = PluginManagerFactory.getPluginManager(Plugin.PLUGINTYPE.findType(i), this);
     }
     
     public static PluginController getInstance() {
@@ -37,15 +32,9 @@ public class PluginController {
     	
     	return instance;
     }
-    
-    
-    public Activity getContext() {
-    	return context;
-    }
-    
-    public List<Plugin> getInstalledPluginList() {
-		List<Plugin> pluginList = mPluginDataSource.loadPlugins();
-		
+
+    public List<Plugin> getInstalledPluginList(PluginDataSource pluginDataSource) {
+		List<Plugin> pluginList = pluginDataSource.getPluginList();
 		List<Plugin> installedPluginList = new ArrayList<Plugin>();
 		for (Plugin plugin:pluginList) {
 			if (plugin.getStatus() == 1) {
@@ -55,34 +44,38 @@ public class PluginController {
     	return installedPluginList;
     }
 
-	public Plugin getPlugin(ServiceViewFactory viewFactory) {
-		List<Plugin> pluginList = mPluginDataSource.loadPlugins();
-		for (Plugin plugin: pluginList) {
-			Log.d("PluginController", "pluginpackage name: "+plugin.getPackageName()+", viewPackagename: "+viewFactory.getClass().getPackage().getName());
-			if (plugin.getPackageName().equals(viewFactory.getClass().getPackage().getName())){
-				return plugin;
+	public Plugin getPlugin(ServiceFragmentFactory viewFactory) {
+		if (activeDataSource != null) {
+			List<Plugin> pluginList = activeDataSource.getPluginList();
+			for (Plugin plugin : pluginList) {
+				Log.d("PluginController", "pluginpackage name: " + plugin.getPackageName() + ", viewPackagename: " + viewFactory.getClass().getPackage().getName());
+				if (plugin.getPackageName().equals(viewFactory.getClass().getPackage().getName())) {
+					return plugin;
+				}
 			}
 		}
 		return null;
 	}
-	
+
+	public List<PluginManager> getPluginManagers() {
+		return Arrays.asList(pluginManagers);
+	}
+
 	public PluginManager getPluginManager(int type) {
 		return pluginManagers[type];
 	}
 
-	private void initDatabase() {
-        mPluginDataSource = new PluginDataSource(context);
-    }
+	public void attachDatasource(PluginDataSource dataSource) {
+		activeDataSource = dataSource;
+	}
 
-    private void loadPlugins() {
-        List<Plugin> pluginList = mPluginDataSource.loadPlugins();
-        for(Plugin plugin:pluginList) {
-            int type = plugin.getType();
-            if (type < PluginManagerFactory.TYPE_MAX && pluginManagers[type] == null) {
-                pluginManagers[type] = PluginManagerFactory.getPluginManager(type, this);
-            }
-        }
-    }
+	public void detachDataSource() {
+		activeDataSource = null;
+	}
+
+	public PluginDataSource getActiveDataSource() {
+		return activeDataSource;
+	}
 
 	public void registerPluginListObserver(
 			ContentObserver mPluginListObserver) {
@@ -91,13 +84,5 @@ public class PluginController {
 				manager.registerPluginListObserver(mPluginListObserver);
 			}
 		}
-		// TODO Auto-generated method stub
-		
 	}
-
-	public PluginDataSource getDataSource() {
-		// TODO Auto-generated method stub
-		return mPluginDataSource;
-	}
-
 }
